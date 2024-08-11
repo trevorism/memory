@@ -6,7 +6,7 @@ import com.google.gson.GsonBuilder
 @jakarta.inject.Singleton
 class FileDataRepository implements DataRepository {
 
-    public static final String REPO_DIRECTORY = "repo"
+    public static final String REPO_DIRECTORY = "/tmp/repo"
     Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").create()
 
     @Override
