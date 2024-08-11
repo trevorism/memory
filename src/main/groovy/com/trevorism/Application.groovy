@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 @OpenAPIDefinition(
         info = @Info(
                 title = "Memory",
-                version = "0.1.0",
+                version = "0.2.0",
                 description = "API which conforms to the Trevorism Data API which serializes data from json files into memory",
                 contact = @Contact(url = "https://trevorism.com", name = "Trevor Brooks", email = "tbrooks@trevorism.com")
         )

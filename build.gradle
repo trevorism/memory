@@ -58,6 +58,7 @@ dependencies {
         exclude module:"slf4j-nop"
     }
 
+    implementation 'com.google.cloud:google-cloud-storage:2.41.0'
     implementation 'com.trevorism:micronaut-utility-beans:1.6.0'
     implementation 'com.google.code.gson:gson:2.11.0'
     runtimeOnly("ch.qos.logback:logback-classic")
@@ -89,7 +90,7 @@ appengine {
     stage.artifact = layout.buildDirectory.file("libs/${project.name}-all.jar")
     deploy {
         projectId = "trevorism-data"
-        version = "0-1-0"
+        version = "0-2-0"
     }
 }
 
