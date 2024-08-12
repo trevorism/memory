@@ -64,6 +64,7 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
 
     testImplementation 'com.trevorism:test-result-events:0.3.0'
+
     acceptanceImplementation 'io.cucumber:cucumber-groovy:6.10.4'
 }
 
@@ -102,7 +103,7 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = 0.0
+                minimum = 0.1
             }
         }
     }
