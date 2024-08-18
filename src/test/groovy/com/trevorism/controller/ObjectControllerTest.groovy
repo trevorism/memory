@@ -25,6 +25,11 @@ class ObjectControllerTest {
             }
 
             @Override
+            int bulkReplace(String kind, List<Map<String, Object>> data) {
+                return 0
+            }
+
+            @Override
             Map<String, Object> read(String kind, String id) {
                 return [:]
             }
@@ -74,5 +79,10 @@ class ObjectControllerTest {
     @Test
     void testDelete() {
         assertThrows(HttpStatusException, () -> objectController.delete("test", "123"))
+    }
+
+    @Test
+    void testBulkCreate() {
+        assert !objectController.bulkCreate("test", [])
     }
 }
