@@ -6,6 +6,8 @@ interface DataRepository {
 
     Map<String, Object> create(String kind, Map<String, Object> data)
 
+    int bulkReplace(String kind, List<Map<String, Object>> data)
+
     Map<String, Object> read(String kind, String id)
 
     List<Map<String, Object>> readAll(String kind)

@@ -65,6 +65,21 @@ class ObjectController {
     }
 
     @Tag(name = "Object Operations")
+    @Operation(summary = "Create a list of objects of type {kind} **Secure")
+    @Status(HttpStatus.CREATED)
+    @Put(value = "{kind}", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+    @Secure(value = Roles.USER, allowInternal = true, permissions = Permissions.CREATE)
+    int bulkCreate(String kind, @Body List<Map<String, Object>> data) {
+        try {
+            def entity = repository.bulkReplace(kind, data)
+            return entity
+        } catch (Exception e) {
+            log.error("Unable to create ${kind}", e)
+            throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to create ${kind}")
+        }
+    }
+
+    @Tag(name = "Object Operations")
     @Operation(summary = "Update an object of type {kind} with id {id} **Secure")
     @Put(value = "{kind}/{id}", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
     @Secure(value = Roles.USER, allowInternal = true, permissions = Permissions.UPDATE)

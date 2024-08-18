@@ -46,7 +46,14 @@ class CloudStorageDataRepository implements DataRepository {
         items << data
         writeFullFile(kind, items)
         return data
+    }
 
+    @Override
+    int bulkReplace(String kind, List<Map<String, Object>> data) {
+        kind = kind.toLowerCase()
+        data.each { addIdIfItDoesNotExist(it) }
+        writeFullFile(kind, data)
+        return data.size()
     }
 
     @Override
