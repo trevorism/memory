@@ -63,7 +63,7 @@ class CloudStorageDataRepository implements DataRepository {
         if (!item) {
             return [:]
         }
-        return item;
+        return item
     }
 
     @Override
