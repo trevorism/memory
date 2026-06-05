@@ -4,5 +4,7 @@
 ![GitHub language count](https://img.shields.io/github/languages/count/trevorism/memory)
 ![GitHub top language](https://img.shields.io/github/languages/top/trevorism/memory)
 
+Store data into Google Cloud Storage.
+
 # How to build
 `gradle clean build`

@@ -58,7 +58,6 @@ dependencies {
         exclude module:"slf4j-nop"
     }
 
-    // Keep google-auth modules aligned to avoid runtime class mismatches.
     implementation(platform("com.google.auth:google-auth-library-bom:1.47.0"))
     implementation 'com.google.auth:google-auth-library-credentials'
     implementation 'com.google.cloud:google-cloud-storage:2.41.0'
