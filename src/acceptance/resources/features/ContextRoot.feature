@@ -15,4 +15,3 @@ Feature: Context Root of this API
     Given the memory application is alive
     When I navigate to /ping on "https://memory.data.trevorism.com"
     Then pong is returned, to indicate the service is alive
-    
