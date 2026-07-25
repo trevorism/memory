@@ -36,18 +36,15 @@ class CloudStorageDataRepository implements DataRepository {
     Map<String, Object> create(String kind, Map<String, Object> data) {
         kind = kind.toLowerCase()
         addIdIfItDoesNotExist(data)
-        List<Map<String, Object>> items = readAll(kind)
-        if (!items) {
-            writeFullFile(kind, [data])
-            return data
-        }
+        Blob blob = readBlob(kind)
+        List<Map<String, Object>> items = parseBlob(blob)
         def existing = items.find() { it.id == data.id }
         if (existing) {
             throw new ConflictException("Item with id ${data.id} already exists in ${kind}")
         }
 
         items << data
-        writeFullFile(kind, items)
+        writeFullFile(kind, items, preconditionFor(blob))
         return data
     }
 
@@ -55,7 +52,7 @@ class CloudStorageDataRepository implements DataRepository {
     int bulkReplace(String kind, List<Map<String, Object>> data) {
         kind = kind.toLowerCase()
         data.each { addIdIfItDoesNotExist(it) }
-        writeFullFile(kind, data)
+        writeFullFile(kind, data, preconditionFor(readBlob(kind)))
         return data.size()
     }
 
@@ -71,26 +68,20 @@ class CloudStorageDataRepository implements DataRepository {
 
     @Override
     List<Map<String, Object>> readAll(String kind) {
-        kind = kind.toLowerCase()
-        Bucket bucket = storage.get(DEFAULT_BUCKET_NAME)
-        Blob blob = bucket.get(kind)
-        if (blob == null) {
-            return []
-        }
-        String content = new String(blob.getContent(), "UTF-8")
-        return gson.fromJson(content, List)
+        return parseBlob(readBlob(kind.toLowerCase()))
     }
 
     @Override
     Map<String, Object> update(String kind, String id, Map<String, Object> data) {
         kind = kind.toLowerCase()
-        List<Map<String, Object>> items = readAll(kind)
+        Blob blob = readBlob(kind)
+        List<Map<String, Object>> items = parseBlob(blob)
         def existing = items.find() { it.id == id }
         if (existing) {
             data["id"] = id
             items.remove(existing)
             items << data
-            writeFullFile(kind, items)
+            writeFullFile(kind, items, preconditionFor(blob))
             return data
         }
         return [:]
@@ -99,22 +90,36 @@ class CloudStorageDataRepository implements DataRepository {
     @Override
     Map<String, Object> delete(String kind, String id) {
         kind = kind.toLowerCase()
-        List<Map<String, Object>> items = readAll(kind)
+        Blob blob = readBlob(kind)
+        List<Map<String, Object>> items = parseBlob(blob)
         def existing = items.find() { it.id == id }
         if (existing) {
             items.remove(existing)
-            writeFullFile(kind, items)
+            writeFullFile(kind, items, preconditionFor(blob))
             return existing
         }
         return [:]
     }
 
-    private void writeFullFile(String kind, List<Map<String, Object>> items) {
+    private Blob readBlob(String kind) {
+        Bucket bucket = storage.get(DEFAULT_BUCKET_NAME)
+        return bucket.get(kind)
+    }
+
+    private List<Map<String, Object>> parseBlob(Blob blob) {
+        if (blob == null) {
+            return []
+        }
+        String content = new String(blob.getContent(), "UTF-8")
+        return gson.fromJson(content, List) ?: []
+    }
+
+    private void writeFullFile(String kind, List<Map<String, Object>> items, Storage.BlobWriteOption precondition) {
         BlobId blobId = BlobId.of(DEFAULT_BUCKET_NAME, kind)
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build()
         def byteArr = gson.toJson(items).getBytes("UTF-8")
         try {
-            storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), createPrecondition(kind))
+            storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), precondition)
         } catch (StorageException e) {
             if (e.code == PRECONDITION_FAILED) {
                 throw new ConflictException("${kind} was modified concurrently, the write was not applied", e)
@@ -123,12 +128,11 @@ class CloudStorageDataRepository implements DataRepository {
         }
     }
 
-    private Storage.BlobWriteOption createPrecondition(String path) {
-        if (storage.get(DEFAULT_BUCKET_NAME, path) == null) {
+    private static Storage.BlobWriteOption preconditionFor(Blob blob) {
+        if (blob == null) {
             return Storage.BlobWriteOption.doesNotExist()
-        } else {
-            return Storage.BlobWriteOption.generationMatch(storage.get(DEFAULT_BUCKET_NAME, path).getGeneration())
         }
+        return Storage.BlobWriteOption.generationMatch(blob.getGeneration())
     }
 
     private static void addIdIfItDoesNotExist(Map<String, Object> jsonObject) {
