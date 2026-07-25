@@ -5,15 +5,18 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.Storage
+import com.google.cloud.storage.StorageException
 import com.google.cloud.storage.StorageOptions
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.trevorism.model.exception.ConflictException
 
 @jakarta.inject.Singleton
 class CloudStorageDataRepository implements DataRepository {
 
     private static final String GCP_DEFAULT_PROJECT = "trevorism-data"
     private static final String DEFAULT_BUCKET_NAME = "memory-trevorism"
+    private static final int PRECONDITION_FAILED = 412
     private Storage storage = StorageOptions.newBuilder().setProjectId(GCP_DEFAULT_PROJECT).build().getService()
     private Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").create()
 
@@ -40,7 +43,7 @@ class CloudStorageDataRepository implements DataRepository {
         }
         def existing = items.find() { it.id == data.id }
         if (existing) {
-            throw new RuntimeException("Item with id ${data.id} already exists")
+            throw new ConflictException("Item with id ${data.id} already exists in ${kind}")
         }
 
         items << data
@@ -110,7 +113,14 @@ class CloudStorageDataRepository implements DataRepository {
         BlobId blobId = BlobId.of(DEFAULT_BUCKET_NAME, kind)
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build()
         def byteArr = gson.toJson(items).getBytes("UTF-8")
-        storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), createPrecondition(kind))
+        try {
+            storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), createPrecondition(kind))
+        } catch (StorageException e) {
+            if (e.code == PRECONDITION_FAILED) {
+                throw new ConflictException("${kind} was modified concurrently, the write was not applied", e)
+            }
+            throw e
+        }
     }
 
     private Storage.BlobWriteOption createPrecondition(String path) {

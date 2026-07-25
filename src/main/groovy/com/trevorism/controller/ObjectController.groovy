@@ -1,5 +1,6 @@
 package com.trevorism.controller
 
+import com.trevorism.model.exception.ConflictException
 import com.trevorism.secure.Permissions
 import com.trevorism.secure.Roles
 import com.trevorism.secure.Secure
@@ -58,6 +59,8 @@ class ObjectController {
         try {
             def entity = repository.create(kind, data)
             return entity
+        } catch (ConflictException e) {
+            throw e
         } catch (Exception e) {
             log.error("Unable to create ${kind}", e)
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to create ${kind}")
@@ -73,6 +76,8 @@ class ObjectController {
         try {
             def entity = repository.bulkReplace(kind, data)
             return entity
+        } catch (ConflictException e) {
+            throw e
         } catch (Exception e) {
             log.error("Unable to create ${kind}", e)
             throw new HttpStatusException(HttpStatus.BAD_REQUEST, "Unable to create ${kind}")
