@@ -1,5 +1,6 @@
 package com.trevorism.controller
 
+import io.micronaut.http.HttpStatus
 import org.junit.jupiter.api.Test
 
 /**
@@ -17,5 +18,20 @@ class RootControllerTest {
     void testRootControllerPing(){
         RootController rootController = new RootController()
         assert rootController.ping() == "pong"
+    }
+
+    @Test
+    void testRootControllerVersion(){
+        RootController rootController = new RootController()
+        assert rootController.version()
+    }
+
+    @Test
+    void testRootControllerHelpRedirectsToTheSwaggerUi(){
+        RootController rootController = new RootController()
+        def response = rootController.help()
+
+        assert HttpStatus.MOVED_PERMANENTLY == response.status
+        assert response.header("Location").contains("swagger-ui")
     }
 }

@@ -89,6 +89,70 @@ class ObjectControllerTest {
     }
 
     @Test
+    void testGetTypesReturnsTheStoredKinds() {
+        objectController.repository = [getTypes: { -> ["task", "prompt-event"] }] as DataRepository
+
+        assert ["task", "prompt-event"] == objectController.getTypes()
+    }
+
+    @Test
+    void testReadReturnsTheStoredObject() {
+        def requested = [:]
+        objectController.repository = [read: { String kind, String id ->
+            requested = [kind: kind, id: id]
+            return [id: id, name: "first"]
+        }] as DataRepository
+
+        assert [id: "123", name: "first"] == objectController.read("task", "123")
+        assert [kind: "task", id: "123"] == requested
+    }
+
+    @Test
+    void testReadAllReturnsEveryStoredObject() {
+        objectController.repository = [readAll: { String kind ->
+            return [[id: "123"], [id: "456"]]
+        }] as DataRepository
+
+        assert 2 == objectController.readAll("task").size()
+    }
+
+    @Test
+    void testCreateReturnsTheCreatedObject() {
+        objectController.repository = [create: { String kind, Map<String, Object> data ->
+            return data + [id: "generated"]
+        }] as DataRepository
+
+        assert [name: "first", id: "generated"] == objectController.create("task", [name: "first"])
+    }
+
+    @Test
+    void testBulkCreateReturnsTheNumberOfObjectsWritten() {
+        objectController.repository = [bulkReplace: { String kind, List<Map<String, Object>> data ->
+            return data.size()
+        }] as DataRepository
+
+        assert 2 == objectController.bulkCreate("task", [[id: "123"], [id: "456"]])
+    }
+
+    @Test
+    void testUpdateReturnsTheUpdatedObject() {
+        objectController.repository = [update: { String kind, String id, Map<String, Object> data ->
+            return data + [id: id]
+        }] as DataRepository
+
+        assert [name: "second", id: "123"] == objectController.update("task", "123", [name: "second"])
+    }
+
+    @Test
+    void testDeleteReturnsTheDeletedObject() {
+        objectController.repository = [delete: { String kind, String id ->
+            return [id: id, name: "first"]
+        }] as DataRepository
+
+        assert [id: "123", name: "first"] == objectController.delete("task", "123")
+    }
+
+    @Test
     void testCreateConflictIsNotDowngradedToABadRequest() {
         objectController.repository = [create: { String kind, Map<String, Object> data ->
             throw new ConflictException("Item with id run already exists in test")
