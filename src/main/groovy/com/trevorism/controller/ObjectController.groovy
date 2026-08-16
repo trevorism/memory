@@ -23,8 +23,9 @@ class ObjectController {
     DataRepository repository
 
     @Tag(name = "Object Operations")
-    @Operation(summary = "Get all types")
+    @Operation(summary = "Get all types **Secure")
     @Get(value = "/", produces = MediaType.APPLICATION_JSON)
+    @Secure(value = Roles.USER, allowInternal = true, permissions = Permissions.READ)
     List<String> getTypes() {
         return repository.getTypes()
     }
