@@ -1,3 +1,7 @@
+## 0.4.0
+
+Upgrade dependencies. 
+
 ## 0.3.0
 
 Upgrade to Micronaut 5.0.0, Java 25, Gradle 9.x shadow plugin, and updated dependencies.
