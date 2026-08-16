@@ -15,6 +15,7 @@ Gson gson = new Gson()
 def stored = null
 int writtenCount = 0
 String listedKinds = null
+int listingStatusCode = 0
 
 def store = { String kind, String id, String name ->
     return gson.fromJson(secureHttpClient.post("${objectUrl}/${kind}".toString(), gson.toJson([id: id, name: name])), Map)
@@ -50,8 +51,17 @@ When(~/^I bulk store an object with id "([^"]*)" in kind "([^"]*)"$/) { String i
     writtenCount = gson.fromJson(secureHttpClient.put("${objectUrl}/${kind}".toString(), gson.toJson([[id: id, name: "bulk"]])), Integer)
 }
 
+When(~/^I list the stored kinds$/) { ->
+    listedKinds = secureHttpClient.get("${objectUrl}/".toString())
+}
+
 When(~/^I list the stored kinds without authenticating$/) { ->
-    listedKinds = new URL("${objectUrl}/").text
+    try {
+        new URL("${objectUrl}/").text
+        listingStatusCode = 200
+    } catch (IOException ignored) {
+        listingStatusCode = 401
+    }
 }
 
 Then(~/^the stored object has id "([^"]*)"$/) { String id ->
@@ -89,4 +99,8 @@ Then(~/^(\d+) object was written$/) { int count ->
 
 Then(~/^"([^"]*)" is one of the listed kinds$/) { String kind ->
     assert gson.fromJson(listedKinds, List).contains(kind)
+}
+
+Then(~/^the listing is rejected$/) { ->
+    assert 401 == listingStatusCode
 }

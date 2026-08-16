@@ -1,3 +1,10 @@
+## 0.5.0
+
+Enable multi-tenancy. The bucket is now derived from the tenant claim on the caller's token:
+`memory-trevorism` by default, `memory-<tenant-guid>` for a tenant. A tenant bucket is created on
+first write. Listing the stored kinds now requires authentication so that it reports the caller's
+own tenant.
+
 ## 0.4.0
 
 Upgrade dependencies. 

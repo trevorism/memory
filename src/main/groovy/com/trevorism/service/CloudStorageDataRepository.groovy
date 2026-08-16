@@ -6,23 +6,28 @@ import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageException
-import com.google.cloud.storage.StorageOptions
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.trevorism.bean.StorageProvider
 import com.trevorism.model.exception.ConflictException
 
 @jakarta.inject.Singleton
 class CloudStorageDataRepository implements DataRepository {
 
-    private static final String GCP_DEFAULT_PROJECT = "trevorism-data"
-    private static final String DEFAULT_BUCKET_NAME = "memory-trevorism"
     private static final int PRECONDITION_FAILED = 412
-    private Storage storage = StorageOptions.newBuilder().setProjectId(GCP_DEFAULT_PROJECT).build().getService()
+    private final StorageProvider storageProvider
     private Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").create()
+
+    CloudStorageDataRepository(StorageProvider storageProvider) {
+        this.storageProvider = storageProvider
+    }
 
     @Override
     List<String> getTypes() {
-        Bucket bucket = storage.get(DEFAULT_BUCKET_NAME)
+        Bucket bucket = storageProvider.bucket
+        if (!bucket) {
+            return []
+        }
         List<String> fileNames = []
         bucket.list().iterateAll().each { Blob blob ->
             if(!blob.getName().endsWith("/")) {
@@ -102,8 +107,8 @@ class CloudStorageDataRepository implements DataRepository {
     }
 
     private Blob readBlob(String kind) {
-        Bucket bucket = storage.get(DEFAULT_BUCKET_NAME)
-        return bucket.get(kind)
+        Bucket bucket = storageProvider.bucket
+        return bucket?.get(kind)
     }
 
     private List<Map<String, Object>> parseBlob(Blob blob) {
@@ -115,11 +120,12 @@ class CloudStorageDataRepository implements DataRepository {
     }
 
     private void writeFullFile(String kind, List<Map<String, Object>> items, Storage.BlobWriteOption precondition) {
-        BlobId blobId = BlobId.of(DEFAULT_BUCKET_NAME, kind)
+        storageProvider.getOrCreateBucket()
+        BlobId blobId = BlobId.of(storageProvider.bucketName, kind)
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build()
         def byteArr = gson.toJson(items).getBytes("UTF-8")
         try {
-            storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), precondition)
+            storageProvider.storage.createFrom(blobInfo, new ByteArrayInputStream(byteArr), precondition)
         } catch (StorageException e) {
             if (e.code == PRECONDITION_FAILED) {
                 throw new ConflictException("${kind} was modified concurrently, the write was not applied", e)

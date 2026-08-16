@@ -40,7 +40,11 @@ Feature: Storing and retrieving objects
     When I store an object with id "cased" and name "first" in kind "Acceptance-Crud"
     Then reading id "cased" from kind "acceptance-crud" returns name "first"
 
-  Scenario: The list of stored kinds is public
+  Scenario: An authenticated caller sees the kinds stored in its own tenant
     Given the kind "acceptance-crud" holds no objects
-    When I list the stored kinds without authenticating
+    When I list the stored kinds
     Then "acceptance-crud" is one of the listed kinds
+
+  Scenario: The list of stored kinds is not public
+    When I list the stored kinds without authenticating
+    Then the listing is rejected

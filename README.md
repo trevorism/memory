@@ -6,5 +6,9 @@
 
 Store data into Google Cloud Storage.
 
+Storage is tenant scoped. The bucket is chosen from the tenant claim on the caller's token:
+callers without a tenant use `memory-trevorism`, a tenant uses `memory-<tenant-guid>`. A tenant's
+bucket is created on its first write, so no provisioning step is needed.
+
 # How to build
 `gradle clean build`
