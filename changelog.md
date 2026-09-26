@@ -1,3 +1,7 @@
+## 0.5.1
+
+Update a few dependencies.
+
 ## 0.5.0
 
 Enable multi-tenancy. The bucket is now derived from the tenant claim on the caller's token:
